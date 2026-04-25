@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KERNEL_PANIC_LOG_V4</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+body {
+    background: #000;
+    color: #fff;
+    font-family: 'VT323', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+#terminal {
+    font-size: 32px;
+    text-align: center;
+    letter-spacing: 2px;
+    width: 90%;
+    line-height: 1.4;
+    text-transform: none; 
+}
+
+.glitch-custom {
+    animation: customShake 0.15s infinite;
+}
+
+@keyframes customShake {
+    0% { transform: translate(0,0); }
+    25% { transform: translate(-2px, 1.5px); }
+    50% { transform: translate(2px, -1.5px); }
+    75% { transform: translate(-1px, -2px); }
+    100% { transform: translate(0,0); }
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.02) 3px);
+  pointer-events: none;
+}
+</style>
+</head>
+<body onclick="startPanic()">
+
+<div id="terminal">CRITICAL SYSTEM FAILURE<br>(CLICK TO INITIALIZE RECOVERY)</div>
+
+<script>
+let active = false;
+const out = document.getElementById('terminal');
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playOriginalClick() {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square'; 
+    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+}
+
+function playDeepHum() {
+    const frequencies = [40, 60]; 
+    frequencies.forEach(freq => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+    });
+}
+
+const stream = [
+    { m: "BOOT_LOG: APRIL 20, 1987 - 03:51:04", d: 6000 },
+    { m: "INITIALIZING NEURAL_LAYER_01...", d: 6000 },
+    { m: "CRITICAL_ERROR: ILLEGAL KERNEL ACCESS", d: 6000 },
+    { m: "FAULT_IN: DIrect Access NEtwork protocol", d: 6000 },
+    { m: "UNAUTHORIZED VIRTUAL BREACH DETECTED", d: 6000 },
+    { m: "VM2.07: CONNECTION_LEAK_CONFIRMED", d: 6000 },
+    { m: "SYSTEM_STATUS: HOSTILE TAKEOVER IN PROGRESS", d: 6000 }
+];
+
+async function startPanic() {
+    if(active) return;
+    active = true;
+    
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
+    out.innerHTML = "ACCESSING ENCRYPTED SECTOR...";
+    
+    setTimeout(async () => {
+        out.innerHTML = "";
+        out.classList.add('glitch-custom');
+        playDeepHum();
+
+        for (let entry of stream) {
+            out.innerHTML = entry.m;
+            playOriginalClick();
+            await new Promise(r => setTimeout(r, entry.d));
+            out.innerHTML = ""; 
+            await new Promise(r => setTimeout(r, 3000)); 
+        }
+        
+        out.innerHTML = "FATAL ERROR: OVERWRITE COMPLETE";
+        document.body.style.background = "#1a0000";
+        setTimeout(() => { location.reload(); }, 3500);
+    }, 5000);
+}
+</script>
+
+</body>
+</html>
